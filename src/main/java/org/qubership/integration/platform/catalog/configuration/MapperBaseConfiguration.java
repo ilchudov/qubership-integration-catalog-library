@@ -28,6 +28,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.swagger.v3.core.util.Json;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -37,23 +38,11 @@ import org.yaml.snakeyaml.LoaderOptions;
 public class MapperBaseConfiguration {
     private static final int CODE_POINT_LIMIT_MB = 256;
 
-    @Bean(name = {"objectMapper", "jsonMapper"})
     @Primary
+    @Bean(name = {"objectMapper", "jsonMapper"})
+    @ConditionalOnProperty(prefix = "app", name = "prefix", havingValue = "qip")
     public ObjectMapper objectMapper() {
-        ObjectMapper objectMapper = JsonMapper.builder()
-                .enable(SerializationFeature.INDENT_OUTPUT)
-                .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)
-                .enable(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_AS_NULL)
-                .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-                .disable(DeserializationFeature.FAIL_ON_INVALID_SUBTYPE)
-                .disable(MapperFeature.DEFAULT_VIEW_INCLUSION)
-                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-                .build();
-        objectMapper.registerModule(new JavaTimeModule());
-        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        objectMapper.setFilterProvider(new SimpleFilterProvider().setFailOnUnknownId(false));
-
-        return objectMapper;
+        return getQipPrimaryObjectMapper();
     }
 
     @Bean("defaultYamlMapper")
@@ -76,6 +65,23 @@ public class MapperBaseConfiguration {
         yamlMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
         return yamlMapper;
+    }
+
+    public ObjectMapper getQipPrimaryObjectMapper() {
+        ObjectMapper objectMapper = JsonMapper.builder()
+                .enable(SerializationFeature.INDENT_OUTPUT)
+                .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)
+                .enable(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_AS_NULL)
+                .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+                .disable(DeserializationFeature.FAIL_ON_INVALID_SUBTYPE)
+                .disable(MapperFeature.DEFAULT_VIEW_INCLUSION)
+                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+                .build();
+        objectMapper.registerModule(new JavaTimeModule());
+        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        objectMapper.setFilterProvider(new SimpleFilterProvider().setFailOnUnknownId(false));
+
+        return objectMapper;
     }
 
     private YAMLFactory createCustomYamlFactory() {
