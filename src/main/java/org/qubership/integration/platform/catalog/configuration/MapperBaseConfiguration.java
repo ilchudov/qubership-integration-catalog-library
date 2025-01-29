@@ -42,7 +42,25 @@ public class MapperBaseConfiguration {
     @Bean(name = {"objectMapper", "jsonMapper"})
     @ConditionalOnProperty(prefix = "app", name = "prefix", havingValue = "qip")
     public ObjectMapper objectMapper() {
-        return getQipPrimaryObjectMapper();
+        return qipPrimaryObjectMapper();
+    }
+
+    @Bean("primaryObjectMapper")
+    public ObjectMapper qipPrimaryObjectMapper() {
+        ObjectMapper objectMapper = JsonMapper.builder()
+                .enable(SerializationFeature.INDENT_OUTPUT)
+                .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)
+                .enable(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_AS_NULL)
+                .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+                .disable(DeserializationFeature.FAIL_ON_INVALID_SUBTYPE)
+                .disable(MapperFeature.DEFAULT_VIEW_INCLUSION)
+                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+                .build();
+        objectMapper.registerModule(new JavaTimeModule());
+        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        objectMapper.setFilterProvider(new SimpleFilterProvider().setFailOnUnknownId(false));
+
+        return objectMapper;
     }
 
     @Bean("defaultYamlMapper")
@@ -65,23 +83,6 @@ public class MapperBaseConfiguration {
         yamlMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
         return yamlMapper;
-    }
-
-    public ObjectMapper getQipPrimaryObjectMapper() {
-        ObjectMapper objectMapper = JsonMapper.builder()
-                .enable(SerializationFeature.INDENT_OUTPUT)
-                .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)
-                .enable(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_AS_NULL)
-                .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-                .disable(DeserializationFeature.FAIL_ON_INVALID_SUBTYPE)
-                .disable(MapperFeature.DEFAULT_VIEW_INCLUSION)
-                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-                .build();
-        objectMapper.registerModule(new JavaTimeModule());
-        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        objectMapper.setFilterProvider(new SimpleFilterProvider().setFailOnUnknownId(false));
-
-        return objectMapper;
     }
 
     private YAMLFactory createCustomYamlFactory() {
